@@ -26,18 +26,29 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private List<Rectangle> obstacles;
     private Rectangle birb;
 
+    // For gravity
+    private int ticks;
+    private int gravityValue;
+
     public GameSurface(final int width, final int height) {
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
 
+        this.ticks = 0;
+        this.gravityValue = 0;
+
+        this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
+        
         for (int i = 0; i < 5; ++i) {
             addObstacles(width, height);
         }
 
-        this.birb = new Rectangle(20, width/2-15, 30, 20);
-
         this.timer = new Timer(20, this);
         this.timer.start();
+    }
+
+    private void gravity() {
+        birb.translate(0, gravityValue);
     }
 
     @Override
@@ -97,6 +108,12 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
+        ticks++;
+        //make birb fall exponentially
+        if (ticks % 4 == 0 && gravityValue < 10) {
+            gravityValue++;
+        }
+
         final List<Rectangle> toRemove = new ArrayList<>();
 
         for (Rectangle obstacle : obstacles) {
@@ -120,6 +137,9 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             addObstacles(d.width, d.height);
         }
 
+        // makes birb fall
+        gravity();
+
         this.repaint();
     }
 
@@ -133,14 +153,13 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
 
         final int minHeight = 10;
-        final int maxHeight = this.getSize().height - birb.height - 10;
+        //final int maxHeight = this.getSize().height - birb.height - 10;
         final int kc = e.getKeyCode();
 
-        if (kc == KeyEvent.VK_UP && birb.y > minHeight) {
-            birb.translate(0, -10);
-        }
-        else if (kc == KeyEvent.VK_DOWN && birb.y < maxHeight) {
-            birb.translate(0, 10);
+        if (kc == KeyEvent.VK_SPACE && birb.y > minHeight) {
+            gravityValue = 0;
+            ticks = 0;
+            birb.translate(0, -80);
         }
     }
     
