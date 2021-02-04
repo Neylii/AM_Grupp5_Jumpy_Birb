@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 /**
- * A simple panel with a jumpy birb "game" in it. 
+ * A simple panel with a jumpy birb "game" in it.
  * 
  */
 public class GameSurface extends JPanel implements ActionListener, KeyListener {
@@ -38,8 +38,9 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.gravityValue = 0;
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
-        
-        for (int i = 0; i < 5; ++i) {
+
+        // how many obstacles to spawn
+        for (int i = 0; i < 1; ++i) {
             addObstacles(width, height);
         }
 
@@ -57,15 +58,25 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         repaint(g);
     }
 
+    /**
+     * Add obstacles one on the top, one on the bottom and a gap in the middle.
+     * 
+     * @param width  on screen
+     * @param height on screen
+     */
     private void addObstacles(final int width, final int height) {
-        int x = ThreadLocalRandom.current().nextInt(width / 2, width - 30);
-        int y = ThreadLocalRandom.current().nextInt(20, height - 30);
-        obstacles.add(new Rectangle(x, y, 10, 10));
+        int columnWidth = 80;
+        int columnGap = 150;
+        int obstacleHeight = ThreadLocalRandom.current().nextInt(50, (height - columnGap));
+        obstacles.add(new Rectangle(width, 0, columnWidth, obstacleHeight));
+
+        int obstacleHeight2 = height - obstacleHeight - columnGap;
+        obstacles.add(new Rectangle(width, obstacleHeight + columnGap, columnWidth, obstacleHeight2));
     }
 
     /**
-     * Call this method when the graphics needs to be repainted
-     * on the graphics surface.
+     * Call this method when the graphics needs to be repainted on the graphics
+     * surface.
      * 
      * @param g the graphics to paint on
      */
@@ -74,10 +85,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         if (gameOver) {
             g.setColor(Color.red);
-            g.fillRect(0, 0, d.width, d.height);    
+            g.fillRect(0, 0, d.width, d.height);
             g.setColor(Color.black);
             g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Game over!", 20, d.width/2-24);
+            g.drawString("Game over!", 20, d.width / 2 - 24);
             return;
         }
 
@@ -87,7 +98,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         // draw the obstacles
         for (Rectangle obstacle : obstacles) {
-            g.setColor(Color.red);
+            g.setColor(Color.green.darker());
             g.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         }
 
@@ -108,33 +119,40 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
+        Dimension d = getSize();
+
         ticks++;
-        //make birb fall exponentially
+        // make birb fall exponentially
         if (ticks % 4 == 0 && gravityValue < 10) {
             gravityValue++;
         }
 
         final List<Rectangle> toRemove = new ArrayList<>();
-
+        int max_x = 0;
         for (Rectangle obstacle : obstacles) {
-            obstacle.translate(-1, 0);
+            // move obstacle -4px along x-axis
+            obstacle.translate(-4, 0);
+            // save the obstacle x position thats furthers to the left
+            if (max_x < obstacle.x) {
+                max_x = obstacle.x;
+            }
+            // if the obstacle has gone off the game surface, add it to the remove list
             if (obstacle.x + obstacle.width < 0) {
-                // we add to another list and remove later
-                // to avoid concurrent modification in a for-each loop
                 toRemove.add(obstacle);
             }
-
+            // Check for collision
             if (obstacle.intersects(birb)) {
                 gameOver = true;
             }
         }
 
-        obstacles.removeAll(toRemove);
-
-        // add new obstacle for every one that was removed
-        for (int i = 0; i < toRemove.size(); ++i) {
-            Dimension d = getSize();
+        // Spawn new obstacles when the furthest one on the left passes half the game surface
+        if (max_x < d.width / 2) {
             addObstacles(d.width, d.height);
+        }
+        // removes all obstacles that have gone of the game surface
+        if (toRemove.size() > 0) {
+            obstacles.removeAll(toRemove);
         }
 
         // makes birb fall
@@ -153,7 +171,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
 
         final int minHeight = 10;
-        //final int maxHeight = this.getSize().height - birb.height - 10;
+        // final int maxHeight = this.getSize().height - birb.height - 10;
         final int kc = e.getKeyCode();
 
         if (kc == KeyEvent.VK_SPACE && birb.y > minHeight) {
@@ -162,7 +180,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             birb.translate(0, -80);
         }
     }
-    
+
     @Override
     public void keyTyped(KeyEvent e) {
         // do nothing
