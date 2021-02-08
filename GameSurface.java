@@ -10,6 +10,9 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.io.File;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -37,6 +40,19 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private int highScore;
 
     private JButton restartButton;
+
+    // picture for birb
+    BufferedImage imgBirb = null;
+    String imagePath = "imgBirb.png";
+    {
+
+        try {
+            imgBirb = ImageIO.read(new File(imagePath));
+
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
 
     public GameSurface(final int width, final int height) {
         this.gameOver = false;
@@ -138,8 +154,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
 
         // draw the birb
-        g.setColor(Color.black);
-        g.fillRect(birb.x, birb.y, birb.width, birb.height);
+        g.drawImage(imgBirb, birb.x, birb.y, birb.width, birb.height, null);
 
         // draw the score
         g.setColor(Color.white);
