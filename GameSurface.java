@@ -30,12 +30,19 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private int ticks;
     private int gravityValue;
 
+    // score
+    private boolean obstacleCheck;
+    private int score;
+
     public GameSurface(final int width, final int height) {
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
 
         this.ticks = 0;
         this.gravityValue = 0;
+
+        this.obstacleCheck = true;
+        this.score = 0;
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
 
@@ -88,7 +95,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             g.fillRect(0, 0, d.width, d.height);
             g.setColor(Color.black);
             g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Game over!", 20, d.width / 2 - 24);
+            g.drawString("Game over!", 250, d.height / 2);
             return;
         }
 
@@ -105,6 +112,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         // draw the birb
         g.setColor(Color.black);
         g.fillRect(birb.x, birb.y, birb.width, birb.height);
+
+        // draw the score
+        g.setColor(Color.white);
+        g.setFont(new Font("Consolas", Font.BOLD, 48));
+        g.drawString("" + score, d.width / 2, d.height / 4);
     }
 
     @Override
@@ -127,12 +139,18 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             gravityValue++;
         }
 
+        // give score when passing obstacle
+        if (birb.x > obstacles.get(0).x && obstacleCheck) {
+            score = score + 10;
+            obstacleCheck = false;
+        }
+
         final List<Rectangle> toRemove = new ArrayList<>();
         int max_x = 0;
         for (Rectangle obstacle : obstacles) {
             // move obstacle -4px along x-axis
             obstacle.translate(-4, 0);
-            // save the obstacle x position thats furthers to the left
+            // save the obstacle x position thats furthers to the right
             if (max_x < obstacle.x) {
                 max_x = obstacle.x;
             }
@@ -146,13 +164,15 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Spawn new obstacles when the furthest one on the left passes half the game surface
+        // Spawn new obstacles when the furthest one on the left passes half the game
+        // surface
         if (max_x < d.width / 2) {
             addObstacles(d.width, d.height);
         }
         // removes all obstacles that have gone of the game surface
         if (toRemove.size() > 0) {
             obstacles.removeAll(toRemove);
+            obstacleCheck = true;
         }
 
         // check collision with ground
@@ -180,6 +200,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         if (kc == KeyEvent.VK_SPACE && birb.y > minHeight) {
             gravityValue = -9;
+            score++;
         }
     }
 
