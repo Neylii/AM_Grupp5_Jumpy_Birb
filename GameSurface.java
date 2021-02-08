@@ -123,7 +123,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         ticks++;
         // make birb fall exponentially
-        if (ticks % 4 == 0 && gravityValue < 10) {
+        if (ticks % 2 == 0 && gravityValue < 12) {
             gravityValue++;
         }
 
@@ -155,6 +155,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             obstacles.removeAll(toRemove);
         }
 
+        // check collision with ground
+        if (birb.y + birb.height > d.height) {
+            gameOver = true;
+        }
+
         // makes birb fall
         gravity();
 
@@ -171,13 +176,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
 
         final int minHeight = 10;
-        // final int maxHeight = this.getSize().height - birb.height - 10;
         final int kc = e.getKeyCode();
 
         if (kc == KeyEvent.VK_SPACE && birb.y > minHeight) {
-            gravityValue = 0;
-            ticks = 0;
-            birb.translate(0, -80);
+            gravityValue = -9;
         }
     }
 
