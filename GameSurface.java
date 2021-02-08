@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -35,6 +36,8 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private int score;
     private int highScore;
 
+    private JButton restartButton;
+
     public GameSurface(final int width, final int height) {
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
@@ -45,6 +48,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.obstacleCheck = true;
         this.score = 0;
         this.highScore = 0;
+
+        restartButton = new JButton();
+        restartButton.addActionListener(this);
+        restartButton.setVisible(false);
+        this.add(restartButton);
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
 
@@ -111,6 +119,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             g.drawString("Highscore:", (d.width / 2) - 130, (d.height / 2) - 40);
             g.setFont(new Font("Consolas", Font.BOLD, 48));
             g.drawString("" + highScore, (d.width / 2) - 20, (d.height / 2) + 20);
+
+            restartButton.setText("Restart");
+            restartButton.setSize(100, 50);
+            restartButton.setLocation((d.width / 2) - 60, d.height - 200);
+            restartButton.setVisible(true);
             return;
         }
 
@@ -141,12 +154,16 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         // update the positions of all aliens
         // and check for collision with the birb
 
+        Dimension d = getSize();
+
+        if (e.getSource() == restartButton) {
+            restart(d);
+        }
+
         if (gameOver) {
             timer.stop();
             return;
         }
-
-        Dimension d = getSize();
 
         ticks++;
         // make birb fall exponentially
@@ -199,6 +216,30 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         gravity();
 
         this.repaint();
+    }
+
+    private void restart(Dimension d) {
+        gameOver = false;
+        obstacles.removeAll(obstacles);
+
+        ticks = 0;
+        gravityValue = 0;
+
+        obstacleCheck = true;
+        score = 0;
+
+        restartButton.setVisible(false);
+
+        this.birb = new Rectangle(60, d.width / 2 - 15, 40, 30);
+
+        // how many obstacles to spawn
+        for (int i = 0; i < 1; ++i) {
+            addObstacles(d.width, d.height);
+        }
+
+        timer.restart();
+
+        repaint();
     }
 
     @Override
