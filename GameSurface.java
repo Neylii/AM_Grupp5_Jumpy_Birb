@@ -33,6 +33,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     // score
     private boolean obstacleCheck;
     private int score;
+    private int highScore;
 
     public GameSurface(final int width, final int height) {
         this.gameOver = false;
@@ -43,6 +44,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         this.obstacleCheck = true;
         this.score = 0;
+        this.highScore = 0;
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
 
@@ -91,11 +93,24 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         final Dimension d = this.getSize();
 
         if (gameOver) {
+
+            if (score > highScore) {
+                highScore = score;
+            }
+
             g.setColor(Color.red);
             g.fillRect(0, 0, d.width, d.height);
             g.setColor(Color.black);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Game over!", 250, d.height / 2);
+            g.setFont(new Font("Consolas", Font.BOLD, 48));
+            g.drawString("Game over!", 250, d.height / 6);
+
+            g.drawString("Score:", (d.width / 2) - 75, d.height / 4);
+            g.setFont(new Font("Consolas", Font.BOLD, 48));
+            g.drawString("" + score, (d.width / 2) - 20, d.height / 3);
+
+            g.drawString("Highscore:", (d.width / 2) - 130, (d.height / 2) - 40);
+            g.setFont(new Font("Consolas", Font.BOLD, 48));
+            g.drawString("" + highScore, (d.width / 2) - 20, (d.height / 2) + 20);
             return;
         }
 
