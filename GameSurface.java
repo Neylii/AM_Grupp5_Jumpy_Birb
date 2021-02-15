@@ -40,6 +40,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private boolean obstacleCheck;
     private int score;
     private int highScore;
+    private String highScoreName;
 
     private JButton restartButton;
 
@@ -128,28 +129,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         final Dimension d = this.getSize();
 
         if (gameOver) {
-            if (score > highScore) {
-                highScore = score;
-            }
-
-            g.setColor(Color.red);
-            g.fillRect(0, 0, d.width, d.height);
-            g.setColor(Color.black);
-            g.setFont(new Font("Consolas", Font.BOLD, 48));
-            g.drawString("Game over!", 250, d.height / 6);
-
-            g.drawString("Score:", (d.width / 2) - 75, d.height / 4);
-            g.setFont(new Font("Consolas", Font.BOLD, 48));
-            g.drawString("" + score, (d.width / 2) - 20, d.height / 3);
-
-            g.drawString("Highscore:", (d.width / 2) - 130, (d.height / 2) - 40);
-            g.setFont(new Font("Consolas", Font.BOLD, 48));
-            g.drawString("" + highScore, (d.width / 2) - 20, (d.height / 2) + 20);
-
-            restartButton.setText("Restart");
-            restartButton.setSize(100, 50);
-            restartButton.setLocation((d.width / 2) - 60, d.height - 200);
-            restartButton.setVisible(true);
+            gameOverScreen(g, d);
             return;
         }
 
@@ -179,6 +159,33 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         g.setColor(Color.white);
         g.setFont(new Font("Consolas", Font.BOLD, 48));
         g.drawString("" + score, d.width / 2, d.height / 4);
+    }
+
+    private void gameOverScreen(Graphics g, final Dimension d) {
+        if (score > highScore) {
+            highScore = score;
+            highScoreName = JOptionPane.showInputDialog("New highscore! Enter your name:");
+        }
+
+        g.setColor(Color.red);
+        g.fillRect(0, 0, d.width, d.height);
+        g.setColor(Color.black);
+        g.setFont(new Font("Consolas", Font.BOLD, 48));
+        g.drawString("Game over!", 250, d.height / 6);
+
+        g.drawString("Score:", (d.width / 2) - 75, d.height / 4);
+        g.setFont(new Font("Consolas", Font.BOLD, 48));
+        g.drawString("" + score, (d.width / 2) - 20, d.height / 3);
+
+        g.drawString("Highscore:", (d.width / 2) - 130, (d.height / 2) - 40);
+        g.setFont(new Font("Consolas", Font.BOLD, 48));
+        g.drawString(highScoreName + ": " + highScore, (d.width / 2) - 20, (d.height / 2) + 20);
+
+        restartButton.setText("Restart");
+        restartButton.setSize(100, 50);
+        restartButton.setLocation((d.width / 2) - 60, d.height - 200);
+        restartButton.setVisible(true);
+        return;
     }
 
     @Override
