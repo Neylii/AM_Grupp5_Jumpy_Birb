@@ -299,8 +299,18 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     public void keyPressed(KeyEvent e) {
         // this event triggers when we press a key and then
         // we will move the birb if the game is not over yet
-        final int minHeight = 10;
+
         final int kc = e.getKeyCode();
+
+        if (gameOver) {
+            if (kc == KeyEvent.VK_SPACE) {
+                Dimension d = getSize();
+                restart(d);
+            }
+            return;
+        }
+
+        final int minHeight = 10;
         if (kc == KeyEvent.VK_SPACE && birb.y > minHeight) {
             gravityValue = -9;
             score++;
