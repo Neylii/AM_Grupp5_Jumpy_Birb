@@ -27,24 +27,33 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
     private static final long serialVersionUID = 6260582674762246325L;
 
+    private boolean startScreen;
     private boolean gameOver;
     private Timer timer;
     private List<Rectangle> obstacles;
+    private int obstacleSpeed;
     private Rectangle birb;
+
+    // Obstacles sizes
+    private int columnWidth;
+    private int columnGap;
 
     // For gravity
     private int ticks;
     private int gravityValue;
 
-    // score
+    // Score
     private boolean obstacleCheck;
     private int score;
     private int highScore;
     private String highScoreName;
 
+    // Buttons
+    private JButton normalDifficulty;
+    private JButton hardDifficulty;
     private JButton restartButton;
 
-    // picture for birb
+    // Picture for birb
     private boolean flap;
     private boolean imageNotFound;
     private BufferedImage wingsUp;
@@ -53,8 +62,12 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private String imagePathDown;
 
     public GameSurface(final int width, final int height) {
+        this.startScreen = true;
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
+        this.obstacleSpeed = -4;
+        this.columnWidth = 80;
+        this.columnGap = 150;
 
         this.ticks = 0;
         this.gravityValue = 0;
@@ -76,6 +89,15 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             imageNotFound = true;
             JOptionPane.showMessageDialog(null, "Error: Could not load image for birb correctly");
         }
+        normalDifficulty = new JButton();
+        normalDifficulty.addActionListener(this);
+        normalDifficulty.setVisible(false);
+        this.add(normalDifficulty);
+
+        hardDifficulty = new JButton();
+        hardDifficulty.addActionListener(this);
+        hardDifficulty.setVisible(false);
+        this.add(hardDifficulty);
 
         restartButton = new JButton();
         restartButton.addActionListener(this);
@@ -110,8 +132,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
      * @param height on screen
      */
     private void addObstacles(final int width, final int height) {
-        int columnWidth = 80;
-        int columnGap = 150;
         int obstacleHeight = ThreadLocalRandom.current().nextInt(50, (height - columnGap));
         obstacles.add(new Rectangle(width, 0, columnWidth, obstacleHeight));
 
@@ -127,6 +147,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
      */
     private void repaint(Graphics g) {
         final Dimension d = this.getSize();
+
+        if (startScreen) {
+            startScreen(g, d);
+            return;
+        }
 
         if (gameOver) {
             gameOverScreen(g, d);
@@ -159,6 +184,21 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         g.setColor(Color.white);
         g.setFont(new Font("Consolas", Font.BOLD, 48));
         g.drawString("" + score, d.width / 2, d.height / 4);
+    }
+
+    private void startScreen(Graphics g, final Dimension d) {
+        g.setColor(Color.black);
+        g.fillRect(0, 0, d.width, d.height);
+
+        normalDifficulty.setText("Normal");
+        normalDifficulty.setSize(100, 50);
+        normalDifficulty.setLocation((d.width / 4) - 60, d.height - 200);
+        normalDifficulty.setVisible(true);
+
+        hardDifficulty.setText("Hard");
+        hardDifficulty.setSize(100, 50);
+        hardDifficulty.setLocation((d.width / 2) - 60, d.height - 200);
+        hardDifficulty.setVisible(true);
     }
 
     private void gameOverScreen(Graphics g, final Dimension d) {
@@ -197,6 +237,20 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         Dimension d = getSize();
 
+        if (e.getSource() == normalDifficulty) {
+            restart(d);
+        }
+
+        if (e.getSource() == hardDifficulty) {
+            obstacleSpeed = -6;
+            columnGap = 130;
+            restart(d);
+        }
+        if (startScreen) {
+            timer.stop();
+            return;
+        }
+
         if (e.getSource() == restartButton) {
             restart(d);
         }
@@ -222,7 +276,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         int max_x = 0;
         for (Rectangle obstacle : obstacles) {
             // move obstacle -4px along x-axis
-            obstacle.translate(-4, 0);
+            obstacle.translate(obstacleSpeed, 0);
             // save the obstacle x position thats furthers to the right
             if (max_x < obstacle.x) {
                 max_x = obstacle.x;
@@ -260,6 +314,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
 
     private void restart(Dimension d) {
+        startScreen = false;
         gameOver = false;
         obstacles.removeAll(obstacles);
 
@@ -269,6 +324,8 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         obstacleCheck = true;
         score = 0;
 
+        normalDifficulty.setVisible(false);
+        hardDifficulty.setVisible(false);
         restartButton.setVisible(false);
 
         this.birb = new Rectangle(60, d.width / 2 - 15, 40, 30);
