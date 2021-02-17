@@ -8,9 +8,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.imageio.ImageIO;
@@ -45,13 +48,15 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     // Score
     private boolean obstacleCheck;
     private int score;
-    private int highScore;
     private String highScoreName;
+
+    // score test
+    private List<Highscore> highscores;
+    private HighscoreComparator hsc;
 
     // Buttons
     private JButton normalDifficulty;
     private JButton hardDifficulty;
-    private JButton restartButton;
 
     // Picture for birb
     private boolean flap;
@@ -74,7 +79,21 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         this.obstacleCheck = true;
         this.score = 0;
-        this.highScore = 0;
+
+        this.highscores = new ArrayList<>();
+        this.hsc = new HighscoreComparator();
+
+        //saves content in highscore file to the list.
+        try (BufferedReader reader = new BufferedReader(new FileReader("highscore.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(" ");
+                highscores.add(new Highscore(parts[0], Integer.parseInt(parts[1])));
+            }
+
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
 
         this.imageNotFound = false;
         this.wingsUp = null;
@@ -98,11 +117,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         hardDifficulty.addActionListener(this);
         hardDifficulty.setVisible(false);
         this.add(hardDifficulty);
-
-        restartButton = new JButton();
-        restartButton.addActionListener(this);
-        restartButton.setVisible(false);
-        this.add(restartButton);
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
 
@@ -202,30 +216,64 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
 
     private void gameOverScreen(Graphics g, final Dimension d) {
-        if (score > highScore) {
-            highScore = score;
-            highScoreName = JOptionPane.showInputDialog("New highscore! Enter your name:");
+
+        if (highscores.size() < 10) {
+            highScoreName = JOptionPane.showInputDialog("You made it to the highscore list! Enter your name:");
+            highscores.add(new Highscore(highScoreName, score));
+
+            Collections.sort(highscores, hsc);
+
+            Highscore.writeScoresToFile(highscores);
+        } else if (highscores.size() == 10) {
+            boolean change = false;
+
+            for (Highscore hss : highscores) {
+                if (score > hss.getScore()) {
+                    change = true;
+                    break;
+                }
+            }
+
+            if (change) {
+                highScoreName = JOptionPane.showInputDialog("You made it to the highscore list! Enter your name:");
+                highscores.remove(highscores.size() - 1);
+                highscores.add(new Highscore(highScoreName, score));
+
+                Collections.sort(highscores, hsc);
+
+                Highscore.writeScoresToFile(highscores);
+            }
         }
 
-        g.setColor(Color.red);
+        g.setColor(Color.PINK);
         g.fillRect(0, 0, d.width, d.height);
         g.setColor(Color.black);
-        g.setFont(new Font("Consolas", Font.BOLD, 48));
+        g.setFont(new Font("Consolas", Font.BOLD, 56));
         g.drawString("Game over!", 250, d.height / 6);
 
-        g.drawString("Score:", (d.width / 2) - 75, d.height / 4);
         g.setFont(new Font("Consolas", Font.BOLD, 48));
-        g.drawString("" + score, (d.width / 2) - 20, d.height / 3);
+        g.drawString("Your score: " + score, (d.width / 2) - 180, (d.height / 4) + 50);
 
-        g.drawString("Highscore:", (d.width / 2) - 130, (d.height / 2) - 40);
-        g.setFont(new Font("Consolas", Font.BOLD, 48));
-        g.drawString(highScoreName + ": " + highScore, (d.width / 2) - 20, (d.height / 2) + 20);
+        g.drawString("Highscores:", (d.width / 2) - 140, (d.height / 2) - 50);
+        g.setFont(new Font("Consolas", Font.BOLD, 30));
 
-        restartButton.setText("Restart");
-        restartButton.setSize(100, 50);
-        restartButton.setLocation((d.width / 2) - 60, d.height - 200);
-        restartButton.setVisible(true);
-        return;
+        int scoreHeight = 400;
+        int scoreWidth = 150;
+        int scorePlacement = 1;
+
+        for (Highscore highscore : highscores) {
+            if (scorePlacement == 6) {
+                scoreWidth = 450;
+                scoreHeight = 400;
+            }
+            g.drawString(scorePlacement + ". " + highscore.toString(), scoreWidth, scoreHeight); 
+            scoreHeight += 35;
+            scorePlacement++;
+        }
+
+
+        g.setFont(new Font("Consolas", Font.BOLD, 24));
+        g.drawString("Press \"space\" to restart", (d.width / 2) - 150, (d.height / 2) + 250);
     }
 
     @Override
@@ -249,10 +297,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         if (startScreen) {
             timer.stop();
             return;
-        }
-
-        if (e.getSource() == restartButton) {
-            restart(d);
         }
 
         if (gameOver) {
@@ -326,7 +370,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         normalDifficulty.setVisible(false);
         hardDifficulty.setVisible(false);
-        restartButton.setVisible(false);
 
         this.birb = new Rectangle(60, d.width / 2 - 15, 40, 30);
 
