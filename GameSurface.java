@@ -46,12 +46,13 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private int gravityValue;
 
     // Score
+    private boolean hardMode;
     private boolean obstacleCheck;
     private int score;
-    private String highScoreName;
 
     // score test
     private List<Highscore> highscores;
+    private List<Highscore> highscoresHard;
     private HighscoreComparator hsc;
 
     // Buttons
@@ -78,22 +79,12 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.gravityValue = 0;
 
         this.obstacleCheck = true;
+        this.hardMode = false;
         this.score = 0;
 
         this.highscores = new ArrayList<>();
+        this.highscoresHard = new ArrayList<>();
         this.hsc = new HighscoreComparator();
-
-        //saves content in highscore file to the list.
-        try (BufferedReader reader = new BufferedReader(new FileReader("highscore.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(" ");
-                highscores.add(new Highscore(parts[0], Integer.parseInt(parts[1])));
-            }
-
-        } catch (IOException ex) {
-            System.err.println(ex);
-        }
 
         this.imageNotFound = false;
         this.wingsUp = null;
@@ -127,6 +118,19 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         this.timer = new Timer(20, this);
         this.timer.start();
+    }
+
+    private void readFromFile(List<Highscore> highscores, String fileToRead) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileToRead))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(" ");
+                highscores.add(new Highscore(parts[0], Integer.parseInt(parts[1])));
+            }
+
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
     }
 
     private void gravity() {
@@ -216,33 +220,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
 
     private void gameOverScreen(Graphics g, final Dimension d) {
-
-        if (highscores.size() < 10) {
-            highScoreName = JOptionPane.showInputDialog("You made it to the highscore list! Enter your name:");
-            highscores.add(new Highscore(highScoreName, score));
-
-            Collections.sort(highscores, hsc);
-
-            Highscore.writeScoresToFile(highscores);
-        } else if (highscores.size() == 10) {
-            boolean change = false;
-
-            for (Highscore hss : highscores) {
-                if (score > hss.getScore()) {
-                    change = true;
-                    break;
-                }
-            }
-
-            if (change) {
-                highScoreName = JOptionPane.showInputDialog("You made it to the highscore list! Enter your name:");
-                highscores.remove(highscores.size() - 1);
-                highscores.add(new Highscore(highScoreName, score));
-
-                Collections.sort(highscores, hsc);
-
-                Highscore.writeScoresToFile(highscores);
-            }
+        if (hardMode) {
+            Highscore.checkHighscore(highscoresHard, score, hardMode, hsc);
+        } else {
+            Highscore.checkHighscore(highscores, score, hardMode, hsc);
         }
 
         g.setColor(Color.PINK);
@@ -254,7 +235,25 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         g.setFont(new Font("Consolas", Font.BOLD, 48));
         g.drawString("Your score: " + score, (d.width / 2) - 180, (d.height / 4) + 50);
 
-        g.drawString("Highscores:", (d.width / 2) - 140, (d.height / 2) - 50);
+        String difficulty = "";
+        if (hardMode) {
+            difficulty = " (Hard)";
+        } else {
+            difficulty = " (Normal)";
+        }
+        g.drawString("Highscores:" + difficulty, (d.width / 2) - 140, (d.height / 2) - 50);
+
+        if (hardMode) {
+            showHighscoresOnScreen(g, highscoresHard);
+        } else {
+            showHighscoresOnScreen(g, highscores);
+        }
+
+        g.setFont(new Font("Consolas", Font.BOLD, 24));
+        g.drawString("Press \"space\" to restart", (d.width / 2) - 150, (d.height / 2) + 250);
+    }
+
+    private void showHighscoresOnScreen(Graphics g, List<Highscore> highscores) {
         g.setFont(new Font("Consolas", Font.BOLD, 30));
 
         int scoreHeight = 400;
@@ -266,14 +265,14 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
                 scoreWidth = 450;
                 scoreHeight = 400;
             }
-            g.drawString(scorePlacement + ". " + highscore.toString(), scoreWidth, scoreHeight); 
+            if (scorePlacement == 10) {
+                g.drawString(scorePlacement + "." + highscore.toString(), scoreWidth, scoreHeight);
+                break;
+            }
+            g.drawString(scorePlacement + ". " + highscore.toString(), scoreWidth, scoreHeight);
             scoreHeight += 35;
             scorePlacement++;
         }
-
-
-        g.setFont(new Font("Consolas", Font.BOLD, 24));
-        g.drawString("Press \"space\" to restart", (d.width / 2) - 150, (d.height / 2) + 250);
     }
 
     @Override
@@ -286,12 +285,16 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         Dimension d = getSize();
 
         if (e.getSource() == normalDifficulty) {
+            readFromFile(highscores, "highscore.txt");
+            hardMode = false;
             restart(d);
         }
 
         if (e.getSource() == hardDifficulty) {
+            readFromFile(highscoresHard, "highscore-hard.txt");
             obstacleSpeed = -6;
             columnGap = 130;
+            hardMode = true;
             restart(d);
         }
         if (startScreen) {
