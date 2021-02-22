@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.JOptionPane;
+import javax.swing.JOptionPane;;
 
 public class Highscore {
     private String name;
@@ -35,22 +35,12 @@ public class Highscore {
     }
 
     public static void checkHighscore(List<Highscore> highscores, int score, boolean hardMode, HighscoreComparator hsc) {
-        String highScoreName;
+        String highScoreName = "";
 
         if (highscores.size() < 10) {
-            do {
-                highScoreName = JOptionPane.showInputDialog("You made it to the highscore list! Enter your name: (1-8 characters)");
-                highScoreName = highScoreName.trim();
+            highScoreName = inputLoop(highScoreName);
+            addToListAndSort(highscores, score, hardMode, hsc, highScoreName);
 
-            } while (highScoreName.length() == 0 || highScoreName.length() > 8);
-
-            highscores.add(new Highscore(highScoreName, score));
-            Collections.sort(highscores, hsc);
-            if (hardMode) {
-                writeScoresToFile(highscores, "highscore-hard.txt");
-            } else {
-                writeScoresToFile(highscores, "highscore.txt");
-            }
         } else if (highscores.size() == 10) {
             boolean change = false;
 
@@ -62,19 +52,37 @@ public class Highscore {
             }
 
             if (change) {
-                highScoreName = JOptionPane.showInputDialog("You made it to the highscore list! Enter your name:");
+                inputLoop(highScoreName);
+                
                 highscores.remove(highscores.size() - 1);
-                highscores.add(new Highscore(highScoreName, score));
-
-                Collections.sort(highscores, hsc);
-
-                if (hardMode) {
-                    writeScoresToFile(highscores, "highscore-hard.txt");
-                } else {
-                    writeScoresToFile(highscores, "highscore.txt");
-                }
+                addToListAndSort(highscores, score, hardMode, hsc, highScoreName);
             }
         }
+    }
+
+    private static void addToListAndSort(List<Highscore> highscores, int score, boolean hardMode, HighscoreComparator hsc,
+            String highScoreName) {
+
+        highscores.add(new Highscore(highScoreName, score));
+        Collections.sort(highscores, hsc);
+        if (hardMode) {
+            writeScoresToFile(highscores, "highscore-hard.txt");
+        } else {
+            writeScoresToFile(highscores, "highscore.txt");
+        }
+    }
+
+    private static String inputLoop(String highScoreName) {
+        do {
+            highScoreName = JOptionPane.showInputDialog(null, "Enter your name:", "New highscore", -1);
+            
+            if (highScoreName != null) {
+                highScoreName = highScoreName.trim();
+            }
+
+        } while (highScoreName == null || highScoreName.length() == 0 || highScoreName.length() > 8);
+
+        return highScoreName;
     }
 
     @Override
