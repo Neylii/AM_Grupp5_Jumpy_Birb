@@ -13,11 +13,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.imageio.ImageIO;
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -56,10 +54,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private List<Highscore> highscores;
     private List<Highscore> highscoresHard;
     private HighscoreComparator hsc;
-
-    // Buttons
-    private JButton normalDifficulty;
-    private JButton hardDifficulty;
 
     // Picture for birb
     private boolean flap;
@@ -122,15 +116,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             imageNotFound = true;
             JOptionPane.showMessageDialog(null, "Error: Could not load image for birb correctly");
         }
-        normalDifficulty = new JButton();
-        normalDifficulty.addActionListener(this);
-        normalDifficulty.setVisible(false);
-        this.add(normalDifficulty);
-
-        hardDifficulty = new JButton();
-        hardDifficulty.addActionListener(this);
-        hardDifficulty.setVisible(false);
-        this.add(hardDifficulty);
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
         this.ground = new Rectangle(0, height-35, 1600, 35);
@@ -238,15 +223,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private void startScreen(Graphics g, final Dimension d) {
         g.drawImage(startScreenBuff, 0, 0, null);
 
-        normalDifficulty.setText("Normal");
-        normalDifficulty.setSize(100, 50);
-        normalDifficulty.setLocation((d.width / 4) - 60, d.height - 200);
-        normalDifficulty.setVisible(true);
-
-        hardDifficulty.setText("Hard");
-        hardDifficulty.setSize(100, 50);
-        hardDifficulty.setLocation((d.width / 2) - 60, d.height - 200);
-        hardDifficulty.setVisible(true);
     }
 
     private void gameOverScreen(Graphics g, final Dimension d) {
@@ -314,19 +290,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         Dimension d = getSize();
 
-        if (e.getSource() == normalDifficulty) {
-            readFromFile(highscores, "highscore.txt");
-            hardMode = false;
-            restart(d);
-        }
-
-        if (e.getSource() == hardDifficulty) {
-            readFromFile(highscoresHard, "highscore-hard.txt");
-            obstacleSpeed = -6;
-            columnGap = 130;
-            hardMode = true;
-            restart(d);
-        }
         if (startScreen) {
             timer.stop();
             return;
@@ -387,10 +350,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             obstacleCheck = true;
         }
 
-        
-        
-        
-
         // makes birb fall
         gravity();
 
@@ -407,9 +366,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         obstacleCheck = true;
         score = 0;
-
-        normalDifficulty.setVisible(false);
-        hardDifficulty.setVisible(false);
 
         this.birb = new Rectangle(60, d.width / 2 - 15, 40, 30);
 
@@ -452,6 +408,23 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         if (gameOver) {
             if (kc == KeyEvent.VK_SPACE) {
                 Dimension d = getSize();
+                restart(d);
+            }
+            return;
+        }
+
+        if (startScreen) {
+            Dimension d = getSize();
+            if (kc == KeyEvent.VK_1) {
+                readFromFile(highscores, "highscore.txt");
+                hardMode = false;
+                restart(d);
+            }
+            else if (kc == KeyEvent.VK_2) {
+                readFromFile(highscoresHard, "highscore-hard.txt");
+                obstacleSpeed = -6;
+                columnGap = 130;
+                hardMode = true;
                 restart(d);
             }
             return;
