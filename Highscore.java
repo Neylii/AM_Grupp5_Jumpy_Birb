@@ -52,7 +52,7 @@ public class Highscore {
             }
 
             if (change) {
-                inputLoop(highScoreName);
+                highScoreName = inputLoop(highScoreName);
                 
                 highscores.remove(highscores.size() - 1);
                 addToListAndSort(highscores, score, hardMode, hsc, highScoreName);
@@ -77,7 +77,7 @@ public class Highscore {
             highScoreName = JOptionPane.showInputDialog(null, "Enter your name:", "New highscore", -1);
             
             if (highScoreName != null) {
-                highScoreName = highScoreName.trim();
+                highScoreName = highScoreName.replaceAll("\\s+", "");
             }
 
         } while (highScoreName == null || highScoreName.length() == 0 || highScoreName.length() > 8);
