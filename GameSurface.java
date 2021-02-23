@@ -37,6 +37,8 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private int obstacleSpeed;
     private Rectangle birb;
 
+    private Rectangle ground;
+
     // Obstacles sizes
     private int columnWidth;
     private int columnGap;
@@ -67,12 +69,24 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private String imagePathUp;
     private String imagePathDown;
 
+    //picture for atmosphere
+    private BufferedImage background;
+    private String imageBackground;
+    private BufferedImage pipe;
+    private String imagePipe;
+    private BufferedImage groundBuff;
+    private String imageGround;
+
+    // start screen
+    private BufferedImage startScreenBuff;
+    private String imageStartScreen;
+
     public GameSurface(final int width, final int height) {
         this.startScreen = true;
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
         this.obstacleSpeed = -4;
-        this.columnWidth = 80;
+        this.columnWidth = 90;
         this.columnGap = 150;
 
         this.ticks = 0;
@@ -92,9 +106,18 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.imagePathUp = "images/birbWingsUp.png";
         this.imagePathDown = "images/birbWingsDown.png";
 
+        this.imageBackground = "images/background.png";
+        this.imagePipe = "images/obstaclepipe.png";
+        this.imageGround = "images/ground.png";
+        this.imageStartScreen = "images/startscreen.png";
+        
         try {
             wingsUp = ImageIO.read(new File(imagePathUp));
             wingsDown = ImageIO.read(new File(imagePathDown));
+            background = ImageIO.read(new File(imageBackground));
+            pipe = ImageIO.read(new File(imagePipe));
+            groundBuff = ImageIO.read(new File(imageGround));
+            startScreenBuff = ImageIO.read(new File(imageStartScreen));
         } catch (IOException e) {
             imageNotFound = true;
             JOptionPane.showMessageDialog(null, "Error: Could not load image for birb correctly");
@@ -110,6 +133,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.add(hardDifficulty);
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
+        this.ground = new Rectangle(0, height-35, 1600, 35);
 
         // how many obstacles to spawn
         for (int i = 0; i < 1; ++i) {
@@ -150,11 +174,13 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
      * @param height on screen
      */
     private void addObstacles(final int width, final int height) {
-        int obstacleHeight = ThreadLocalRandom.current().nextInt(50, (height - columnGap));
+        int obstacleHeight = ThreadLocalRandom.current().nextInt(100, (height - columnGap) - 50);
+        // top obstacle
         obstacles.add(new Rectangle(width, 0, columnWidth, obstacleHeight));
 
-        int obstacleHeight2 = height - obstacleHeight - columnGap;
-        obstacles.add(new Rectangle(width, obstacleHeight + columnGap, columnWidth, obstacleHeight2));
+        // bottom obstacle
+        int bottomObstacle = height - obstacleHeight - columnGap;
+        obstacles.add(new Rectangle(width, obstacleHeight + columnGap, columnWidth, bottomObstacle));
     }
 
     /**
@@ -176,15 +202,20 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
-        // fill the background
-        g.setColor(Color.cyan);
-        g.fillRect(0, 0, d.width, d.height);
+        // draw the background
+        g.drawImage(background, 0, 0, null);
 
         // draw the obstacles
         for (Rectangle obstacle : obstacles) {
-            g.setColor(Color.green.darker());
-            g.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            g.drawImage(pipe, obstacle.x, obstacle.y, obstacle.width, obstacle.height, null);
         }
+
+        // reposition ground
+        if (ground.x < -800) {
+            ground.x = 0;
+        }
+        //draw ground
+        g.drawImage(groundBuff, ground.x, d.height - ground.height, null);
 
         // draw the birb
         if (imageNotFound) {
@@ -205,8 +236,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
 
     private void startScreen(Graphics g, final Dimension d) {
-        g.setColor(Color.black);
-        g.fillRect(0, 0, d.width, d.height);
+        g.drawImage(startScreenBuff, 0, 0, null);
 
         normalDifficulty.setText("Normal");
         normalDifficulty.setSize(100, 50);
@@ -319,6 +349,14 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             obstacleCheck = false;
         }
 
+        //move ground
+        ground.translate(obstacleSpeed, 0);
+        
+        // check collision with ground
+        if (birb.y + birb.height > d.height - 35) {
+            gameOver = true;
+        }
+        
         final List<Rectangle> toRemove = new ArrayList<>();
         int max_x = 0;
         for (Rectangle obstacle : obstacles) {
@@ -349,10 +387,9 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             obstacleCheck = true;
         }
 
-        // check collision with ground
-        if (birb.y + birb.height > d.height) {
-            gameOver = true;
-        }
+        
+        
+        
 
         // makes birb fall
         gravity();
