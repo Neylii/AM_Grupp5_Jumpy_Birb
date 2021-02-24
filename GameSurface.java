@@ -32,7 +32,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private boolean gameOver;
     private Timer timer;
     private List<Rectangle> obstacles;
-    private int obstacleSpeed;
+    private int speed;
     private Rectangle birb;
 
     private Rectangle ground;
@@ -41,8 +41,8 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private int columnWidth;
     private int columnGap;
 
-    // For gravity
-    private int ticks;
+    // Gravity
+    private int tickRate;
     private int gravityValue;
 
     // Score
@@ -50,40 +50,43 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private boolean obstacleCheck;
     private int score;
 
-    // score test
+    // Score test
     private List<Highscore> highscores;
     private List<Highscore> highscoresHard;
     private HighscoreComparator hsc;
 
-    // Picture for birb
+    // Images for birb
     private boolean flap;
-    private boolean imageNotFound;
     private BufferedImage wingsUp;
+    private String pathWingsUp;
     private BufferedImage wingsDown;
-    private String imagePathUp;
-    private String imagePathDown;
+    private String pathWingsDown;
 
-    //picture for atmosphere
+    // Images for atmosphere
     private BufferedImage background;
-    private String imageBackground;
+    private String pathBackground;
     private BufferedImage pipe;
-    private String imagePipe;
-    private BufferedImage groundBuff;
-    private String imageGround;
+    private String pathPipe;
+    private BufferedImage imageGround;
+    private String pathGround;
 
-    // start screen
-    private BufferedImage startScreenBuff;
-    private String imageStartScreen;
+    // Image for Startscreen
+    private BufferedImage imageStartScreen;
+    private String pathStartScreen;
+
+    // Image for Endscreen
+    private BufferedImage imageEndScreen;
+    private String pathEndScreen;
 
     public GameSurface(final int width, final int height) {
         this.startScreen = true;
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
-        this.obstacleSpeed = -4;
+        this.speed = -4;
         this.columnWidth = 90;
         this.columnGap = 150;
 
-        this.ticks = 0;
+        this.tickRate = 0;
         this.gravityValue = 0;
 
         this.obstacleCheck = true;
@@ -94,33 +97,34 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.highscoresHard = new ArrayList<>();
         this.hsc = new HighscoreComparator();
 
-        this.imageNotFound = false;
         this.wingsUp = null;
         this.wingsDown = null;
-        this.imagePathUp = "images/birbWingsUp.png";
-        this.imagePathDown = "images/birbWingsDown.png";
 
-        this.imageBackground = "images/background.png";
-        this.imagePipe = "images/obstaclepipe.png";
-        this.imageGround = "images/ground.png";
-        this.imageStartScreen = "images/startscreen.png";
-        
+        this.pathWingsUp = "images/birbWingsUp.png";
+        this.pathWingsDown = "images/birbWingsDown.png";
+        this.pathBackground = "images/background.png";
+        this.pathPipe = "images/obstaclepipe.png";
+        this.pathGround = "images/ground.png";
+        this.pathStartScreen = "images/startscreen.png";
+        this.pathEndScreen = "images/endscreen.png";
+
         try {
-            wingsUp = ImageIO.read(new File(imagePathUp));
-            wingsDown = ImageIO.read(new File(imagePathDown));
-            background = ImageIO.read(new File(imageBackground));
-            pipe = ImageIO.read(new File(imagePipe));
-            groundBuff = ImageIO.read(new File(imageGround));
-            startScreenBuff = ImageIO.read(new File(imageStartScreen));
+            wingsUp = ImageIO.read(new File(pathWingsUp));
+            wingsDown = ImageIO.read(new File(pathWingsDown));
+            background = ImageIO.read(new File(pathBackground));
+            pipe = ImageIO.read(new File(pathPipe));
+            imageGround = ImageIO.read(new File(pathGround));
+            imageStartScreen = ImageIO.read(new File(pathStartScreen));
+            imageEndScreen = ImageIO.read(new File(pathEndScreen));
         } catch (IOException e) {
-            imageNotFound = true;
-            JOptionPane.showMessageDialog(null, "Error: Could not load image for birb correctly");
+            JOptionPane.showMessageDialog(null, "Error: Could not load images correctly");
+            System.exit(-1);
         }
 
         this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
-        this.ground = new Rectangle(0, height-35, 1600, 35);
+        this.ground = new Rectangle(0, height - 35, 1600, 35);
 
-        // how many obstacles to spawn
+        // How many obstacles to spawn
         for (int i = 0; i < 1; ++i) {
             addObstacles(width, height);
         }
@@ -160,10 +164,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
      */
     private void addObstacles(final int width, final int height) {
         int obstacleHeight = ThreadLocalRandom.current().nextInt(100, (height - columnGap) - 50);
-        // top obstacle
+        // Top obstacle
         obstacles.add(new Rectangle(width, 0, columnWidth, obstacleHeight));
 
-        // bottom obstacle
+        // Bottom obstacle
         int bottomObstacle = height - obstacleHeight - columnGap;
         obstacles.add(new Rectangle(width, obstacleHeight + columnGap, columnWidth, bottomObstacle));
     }
@@ -187,76 +191,70 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
-        // draw the background
+        drawImages(g, d);
+
+        // Reposition ground
+        if (ground.x < -800) {
+            ground.x = 0;
+        }
+
+        // Draw score
+        g.setColor(Color.white);
+        g.setFont(new Font("Consolas", Font.BOLD, 48));
+        g.drawString("" + score, d.width / 2, d.height / 4);
+
+    }
+
+    private void drawImages(Graphics g, Dimension d) {
+        // Draw background
         g.drawImage(background, 0, 0, null);
 
-        // draw the obstacles
+        // Draw obstacles
         for (Rectangle obstacle : obstacles) {
             g.drawImage(pipe, obstacle.x, obstacle.y, obstacle.width, obstacle.height, null);
         }
 
-        // reposition ground
-        if (ground.x < -800) {
-            ground.x = 0;
+        // Draw obstacles
+        for (Rectangle obstacle : obstacles) {
+            g.drawImage(pipe, obstacle.x, obstacle.y, obstacle.width, obstacle.height, null);
         }
-        //draw ground
-        g.drawImage(groundBuff, ground.x, d.height - ground.height, null);
 
-        // draw the birb
-        if (imageNotFound) {
-            g.setColor(Color.black);
-            g.fillRect(birb.x, birb.y, birb.width, birb.height);
+        // Draw ground
+        g.drawImage(imageGround, ground.x, d.height - ground.height, null);
+
+        // Draw birb
+        if (flap) {
+            g.drawImage(wingsDown, birb.x, birb.y, birb.width, birb.height, null);
         } else {
-            if (flap) {
-                g.drawImage(wingsDown, birb.x, birb.y, birb.width, birb.height, null);
-            } else {
-                g.drawImage(wingsUp, birb.x, birb.y, birb.width, birb.height, null);
-            }
+            g.drawImage(wingsUp, birb.x, birb.y, birb.width, birb.height, null);
         }
-
-        // draw the score
-        g.setColor(Color.white);
-        g.setFont(new Font("Consolas", Font.BOLD, 48));
-        g.drawString("" + score, d.width / 2, d.height / 4);
     }
 
     private void startScreen(Graphics g, final Dimension d) {
-        g.drawImage(startScreenBuff, 0, 0, null);
-
+        g.drawImage(imageStartScreen, 0, -35, null);
     }
 
     private void gameOverScreen(Graphics g, final Dimension d) {
+        
+        String difficulty = "";
         if (hardMode) {
             Highscore.checkHighscore(highscoresHard, score, hardMode, hsc);
+            difficulty = " Hard";
         } else {
             Highscore.checkHighscore(highscores, score, hardMode, hsc);
+            difficulty = " Normal";
         }
-
-        g.setColor(Color.PINK);
-        g.fillRect(0, 0, d.width, d.height);
-        g.setColor(Color.black);
-        g.setFont(new Font("Consolas", Font.BOLD, 56));
-        g.drawString("Game over!", 250, d.height / 6);
-
+        g.drawImage(imageEndScreen, 0, 0, null);
         g.setFont(new Font("Consolas", Font.BOLD, 48));
         g.drawString("Your score: " + score, (d.width / 2) - 180, (d.height / 4) + 50);
 
-        String difficulty = "";
-        if (hardMode) {
-            difficulty = " (Hard)";
-        } else {
-            difficulty = " (Normal)";
-        }
-        g.drawString("Highscores:" + difficulty, (d.width / 2) - 140, (d.height / 2) - 50);
+        g.drawString("Highscores:" + difficulty, (d.width / 2) - 200, (d.height / 2) - 50);
 
         if (hardMode) {
             showHighscoresOnScreen(g, highscoresHard);
         } else {
             showHighscoresOnScreen(g, highscores);
         }
-
-        g.setFont(new Font("Consolas", Font.BOLD, 24));
-        g.drawString("Press \"space\" to restart", (d.width / 2) - 150, (d.height / 2) + 250);
     }
 
     private void showHighscoresOnScreen(Graphics g, List<Highscore> highscores) {
@@ -283,77 +281,78 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // this will trigger on the timer event
+        // This will trigger on the timer event
         // if the game is not over yet it will
         // update the positions of all aliens
         // and check for collision with the birb
-
         Dimension d = getSize();
 
-        if (startScreen) {
+        if (startScreen || gameOver) {
             timer.stop();
             return;
         }
 
-        if (gameOver) {
-            timer.stop();
-            return;
-        }
-
-        ticks++;
-        // make birb fall exponentially
-        if (ticks % 2 == 0 && gravityValue < 12) {
+        tickRate++;
+        // Make birb fall exponentially
+        if (tickRate % 2 == 0 && gravityValue < 12) {
             gravityValue++;
         }
 
-        // give score when passing obstacle
+        // Give score when passing obstacle
         if (birb.x > obstacles.get(0).x && obstacleCheck) {
             score = score + 10;
             obstacleCheck = false;
         }
 
-        //move ground
-        ground.translate(obstacleSpeed, 0);
-        
-        // check collision with ground
+        // Move ground
+        ground.translate(speed, 0);
+
+        // Check collision with ground
         if (birb.y + birb.height > d.height - 35) {
             gameOver = true;
         }
-        
+
         final List<Rectangle> toRemove = new ArrayList<>();
-        int max_x = 0;
-        for (Rectangle obstacle : obstacles) {
-            // move obstacle -4px along x-axis
-            obstacle.translate(obstacleSpeed, 0);
-            // save the obstacle x position thats furthers to the right
-            if (max_x < obstacle.x) {
-                max_x = obstacle.x;
-            }
-            // if the obstacle has gone off the game surface, add it to the remove list
-            if (obstacle.x + obstacle.width < 0) {
-                toRemove.add(obstacle);
-            }
-            // Check for collision
-            if (obstacle.intersects(birb)) {
-                gameOver = true;
-            }
-        }
+        int max_x = moveObstacle(toRemove);
 
         // Spawn new obstacles when the furthest one on the left passes half the game
         // surface
         if (max_x < d.width / 2) {
             addObstacles(d.width, d.height);
         }
-        // removes all obstacles that have gone of the game surface
+        // Removes all obstacles that have gone of the game surface
         if (toRemove.size() > 0) {
             obstacles.removeAll(toRemove);
             obstacleCheck = true;
         }
 
-        // makes birb fall
+        // Makes birb fall
         gravity();
-
         this.repaint();
+    }
+
+    private int moveObstacle(final List<Rectangle> toRemove) {
+        int max_x = 0;
+        for (Rectangle obstacle : obstacles) {
+            // Move obstacle along x-axis
+            obstacle.translate(speed, 0);
+            // Save the obstacle x-position thats furthers to the right
+            if (max_x < obstacle.x) {
+                max_x = obstacle.x;
+            }
+            // If the obstacle has gone off the game surface, add it to the remove list
+            if (obstacle.x + obstacle.width < 0) {
+                toRemove.add(obstacle);
+            }
+            collisionCheck(obstacle);
+        }
+        return max_x;
+    }
+
+    private void collisionCheck(Rectangle obstacle) {
+        if (obstacle.intersects(birb)) {
+            gameOver = true;
+        }
     }
 
     private void restart(Dimension d) {
@@ -361,7 +360,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         gameOver = false;
         obstacles.removeAll(obstacles);
 
-        ticks = 0;
+        tickRate = 0;
         gravityValue = 0;
 
         obstacleCheck = true;
@@ -369,13 +368,12 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         this.birb = new Rectangle(60, d.width / 2 - 15, 40, 30);
 
-        // how many obstacles to spawn
+        // How many obstacles to spawn
         for (int i = 0; i < 1; ++i) {
             addObstacles(d.width, d.height);
         }
 
         timer.restart();
-
         repaint();
     }
 
@@ -387,7 +385,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         final int minHeight = 10;
         final int kc = e.getKeyCode();
-
         if (kc == KeyEvent.VK_SPACE && birb.y > minHeight) {
             flap = false;
         }
@@ -395,39 +392,24 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // do nothing
+        // Do nothing
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        // this event triggers when we press a key and then
+        // This event triggers when we press a key and then
         // we will move the birb if the game is not over yet
 
         final int kc = e.getKeyCode();
-
         if (gameOver) {
             if (kc == KeyEvent.VK_SPACE) {
                 Dimension d = getSize();
                 restart(d);
             }
-            return;
         }
 
         if (startScreen) {
-            Dimension d = getSize();
-            if (kc == KeyEvent.VK_1) {
-                readFromFile(highscores, "highscore.txt");
-                hardMode = false;
-                restart(d);
-            }
-            else if (kc == KeyEvent.VK_2) {
-                readFromFile(highscoresHard, "highscore-hard.txt");
-                obstacleSpeed = -6;
-                columnGap = 130;
-                hardMode = true;
-                restart(d);
-            }
-            return;
+            setDifficulty(kc);
         }
 
         final int minHeight = 10;
@@ -435,6 +417,21 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             gravityValue = -9;
             score++;
             flap = true;
+        }
+    }
+
+    private void setDifficulty(final int kc) {
+        Dimension d = getSize();
+        if (kc == KeyEvent.VK_1) {
+            readFromFile(highscores, "highscore.txt");
+            hardMode = false;
+            restart(d);
+        } else if (kc == KeyEvent.VK_2) {
+            readFromFile(highscoresHard, "highscore-hard.txt");
+            speed = -6;
+            columnGap = 130;
+            hardMode = true;
+            restart(d);
         }
     }
 }
