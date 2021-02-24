@@ -121,7 +121,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             System.exit(-1);
         }
 
-        this.birb = new Rectangle(60, width / 2 - 15, 40, 30);
+        this.birb = new Rectangle(60, width / 2 - 15, 60, 45);
         this.ground = new Rectangle(0, height - 35, 1600, 35);
 
         // How many obstacles to spawn
@@ -231,7 +231,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
 
     private void startScreen(Graphics g, final Dimension d) {
-        g.drawImage(imageStartScreen, 0, -35, null);
+        g.drawImage(imageStartScreen, -9, -39, null);
     }
 
     private void gameOverScreen(Graphics g, final Dimension d) {
@@ -244,7 +244,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             Highscore.checkHighscore(highscores, score, hardMode, hsc);
             difficulty = " Normal";
         }
-        g.drawImage(imageEndScreen, 0, 0, null);
+        g.drawImage(imageEndScreen, -9, -39, null);
         g.setFont(new Font("Consolas", Font.BOLD, 48));
         g.drawString("Your score: " + score, (d.width / 2) - 180, (d.height / 4) + 50);
 
@@ -366,7 +366,8 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         obstacleCheck = true;
         score = 0;
 
-        this.birb = new Rectangle(60, d.width / 2 - 15, 40, 30);
+        birb.x = 60;
+        birb.y = d.width / 2 - 15;
 
         // How many obstacles to spawn
         for (int i = 0; i < 1; ++i) {
