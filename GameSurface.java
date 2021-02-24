@@ -194,7 +194,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         drawImages(g, d);
 
         // Reposition ground
-        if (ground.x < -800) {
+        if (ground.x < -828) {
             ground.x = 0;
         }
 
