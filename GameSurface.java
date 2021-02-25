@@ -78,7 +78,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private BufferedImage imageEndScreen;
     private String pathEndScreen;
 
+    private List<Cloud> clouds;
+    
     public GameSurface(final int width, final int height) {
+
         this.startScreen = true;
         this.gameOver = false;
         this.obstacles = new ArrayList<>();
@@ -124,10 +127,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         this.birb = new Rectangle(60, width / 2 - 15, 60, 45);
         this.ground = new Rectangle(0, height - 35, 1600, 35);
 
-        // How many obstacles to spawn
-        for (int i = 0; i < 1; ++i) {
-            addObstacles(width, height);
-        }
+        this.clouds = new ArrayList<>();
+        
+        addObstacles(width, height);
+
+        Cloud.addCloud(clouds, -2);
 
         this.timer = new Timer(20, this);
         this.timer.start();
@@ -157,22 +161,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
 
     /**
-     * Add obstacles one on the top, one on the bottom and a gap in the middle.
-     *
-     * @param width  on screen
-     * @param height on screen
-     */
-    private void addObstacles(final int width, final int height) {
-        int obstacleHeight = ThreadLocalRandom.current().nextInt(100, (height - columnGap) - 50);
-        // Top obstacle
-        obstacles.add(new Rectangle(width, 0, columnWidth, obstacleHeight));
-
-        // Bottom obstacle
-        int bottomObstacle = height - obstacleHeight - columnGap;
-        obstacles.add(new Rectangle(width, obstacleHeight + columnGap, columnWidth, bottomObstacle));
-    }
-
-    /**
      * Call this method when the graphics needs to be repainted on the graphics
      * surface.
      *
@@ -194,7 +182,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         drawImages(g, d);
 
         // Reposition ground
-        if (ground.x < -828) {
+        if (ground.x < -812) {
             ground.x = 0;
         }
 
@@ -208,6 +196,11 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private void drawImages(Graphics g, Dimension d) {
         // Draw background
         g.drawImage(background, 0, 0, null);
+
+        //draw cloud
+        for (Cloud cloud : clouds) {
+            g.drawImage(cloud.getCloudPic(), cloud.getX(), cloud.getY(), null);
+        }
 
         // Draw obstacles
         for (Rectangle obstacle : obstacles) {
@@ -312,6 +305,23 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             gameOver = true;
         }
 
+        int maxCloud_x = Cloud.moveCloud(clouds);
+
+        // Spawn new clouds when the furthest one on the left passes half the game
+        // surface
+        if (maxCloud_x < d.width/2) {
+            if (hardMode) {
+                Cloud.addCloud(clouds, -3);
+            } else {
+                Cloud.addCloud(clouds, -1);
+            }
+        }
+
+        // Removes all clouds that have gone of the game surface
+        if (Cloud.getToRemoveClouds().size() > 0) {
+            clouds.removeAll(Cloud.getToRemoveClouds());
+        }
+
         final List<Rectangle> toRemove = new ArrayList<>();
         int max_x = moveObstacle(toRemove);
 
@@ -349,6 +359,22 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         return max_x;
     }
 
+    /**
+     * Add obstacles one on the top, one on the bottom and a gap in the middle.
+     *
+     * @param width  on screen
+     * @param height on screen
+     */
+    private void addObstacles(final int width, final int height) {
+        int obstacleHeight = ThreadLocalRandom.current().nextInt(100, (height - columnGap) - 50);
+        // Top obstacle
+        obstacles.add(new Rectangle(width, 0, columnWidth, obstacleHeight));
+
+        // Bottom obstacle
+        int bottomObstacle = height - obstacleHeight - columnGap;
+        obstacles.add(new Rectangle(width, obstacleHeight + columnGap, columnWidth, bottomObstacle));
+    }
+
     private void collisionCheck(Rectangle obstacle) {
         if (obstacle.intersects(birb)) {
             gameOver = true;
@@ -359,6 +385,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         startScreen = false;
         gameOver = false;
         obstacles.removeAll(obstacles);
+        clouds.removeAll(clouds);
 
         tickRate = 0;
         gravityValue = 0;
